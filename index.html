@@ -9,29 +9,29 @@
 <body>
     <div id="button">
         <div id="up">
-            <button onmousedown="sendCommand('F')" onmouseup="sendCommand('S')"><ion-icon name="arrow-up-outline"></ion-icon></button>
+            <button onmousedown="sendCommand('F')" onmouseup="sendCommand('S')" id="upBtn" disabled><ion-icon name="arrow-up-outline"></ion-icon></button>
         </div>
         <div id="down">
-            <button onmousedown="sendCommand('B')" onmouseup="sendCommand('S')"><ion-icon name="arrow-down-outline"></ion-icon></button>
+            <button onmousedown="sendCommand('B')" onmouseup="sendCommand('S')" id="downBtn" disabled><ion-icon name="arrow-down-outline"></ion-icon></button>
         </div>
         <div id="left">
-            <button onmousedown="sendCommand('L')" onmouseup="sendCommand('S')"><ion-icon name="arrow-back-outline"></ion-icon></button>
+            <button onmousedown="sendCommand('L')" onmouseup="sendCommand('S')" id="leftBtn" disabled><ion-icon name="arrow-back-outline"></ion-icon></button>
         </div>
         <div id="right">
-            <button onmousedown="sendCommand('R')" onmouseup="sendCommand('S')"><ion-icon name="arrow-forward-outline"></ion-icon></button>
+            <button onmousedown="sendCommand('R')" onmouseup="sendCommand('S')" id="rightBtn" disabled><ion-icon name="arrow-forward-outline"></ion-icon></button>
         </div>
         <div id="stop">
-            <button onmousedown="sendCommand('S')"><ion-icon name="stop-circle-outline"></ion-icon></button>
+            <button onmousedown="sendCommand('S')" id="stopBtn" disabled><ion-icon name="stop-circle-outline"></ion-icon></button>
         </div>
 
         <div id="mode">
-            <button onclick="sendMode('A')"><ion-icon name="play-circle-outline"></ion-icon></button>
+            <button onclick="toggleMode()" id="modeBtn"><ion-icon name="play-circle-outline"></ion-icon></button>
         </div>
 
         <div id="speed">
-            <button onclick="sendSpeed('1')">1</button>
-            <button onclick="sendSpeed('2')">2</button>
-            <button onclick="sendSpeed('3')">3</button>
+            <button onclick="sendSpeed('1')" id="speed1Btn" disabled>1</button>
+            <button onclick="sendSpeed('2')" id="speed2Btn" disabled>2</button>
+            <button onclick="sendSpeed('3')" id="speed3Btn" disabled>3</button>
         </div>
     </div>
     <style>
@@ -84,7 +84,6 @@
             border: 2px solid #333;
             background-color: white;
             transition: box-shadow 0.2s ease, border-color 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
         }
 
         button:active {
@@ -120,7 +119,7 @@
     <script type="module">
         // Firebase configuration and initialization
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
 
         const firebaseConfig = {
@@ -138,39 +137,61 @@
         const analytics = getAnalytics(app);
         const database = getDatabase(app);
 
+        let isAutoMode = false;
+
         // Function to send commands to Firebase
         window.sendCommand = function(command) {
-            const commandRef = ref(database, 'commands');
-            set(commandRef, command)
-                .then(() => {
-                    console.log('Command sent:', command);
-                })
-                .catch((error) => {
-                    console.error('Error sending command:', error);
-                });
+            if (!isAutoMode) {
+                const commandRef = ref(database, 'commands');
+                set(commandRef, command)
+                    .then(() => {
+                        console.log('Command sent:', command);
+                    })
+                    .catch((error) => {
+                        console.error('Error sending command:', error);
+                    });
+            }
         }
 
         // Function to send speed to Firebase
         window.sendSpeed = function(speed) {
-            const speedRef = ref(database, 'speed');
-            set(speedRef, speed)
-                .then(() => {
-                    console.log('Speed sent:', speed);
-                })
-                .catch((error) => {
-                    console.error('Error sending speed:', error);
-                });
+            if (!isAutoMode) {
+                const speedRef = ref(database, 'speed');
+                set(speedRef, speed)
+                    .then(() => {
+                        console.log('Speed sent:', speed);
+                    })
+                    .catch((error) => {
+                        console.error('Error sending speed:', error);
+                    });
+            }
         }
 
-        window.sendMode = function(mode) {
+        // Function to toggle auto/manual mode
+        window.toggleMode = function() {
+            isAutoMode = !isAutoMode;
             const modeRef = ref(database, 'mode');
+            const mode = isAutoMode ? 'A' : 'M';  // 'A' for auto, 'M' for manual
             set(modeRef, mode)
                 .then(() => {
                     console.log('Mode sent:', mode);
+                    toggleControlButtons(!isAutoMode);  // Enable or disable manual control buttons
                 })
                 .catch((error) => {
                     console.error('Error sending mode:', error);
                 });
+        }
+
+        // Function to enable or disable manual control buttons based on mode
+        function toggleControlButtons(enable) {
+            document.getElementById('upBtn').disabled = !enable;
+            document.getElementById('downBtn').disabled = !enable;
+            document.getElementById('leftBtn').disabled = !enable;
+            document.getElementById('rightBtn').disabled = !enable;
+            document.getElementById('stopBtn').disabled = !enable;
+            document.getElementById('speed1Btn').disabled = !enable;
+            document.getElementById('speed2Btn').disabled = !enable;
+            document.getElementById('speed3Btn').disabled = !enable;
         }
 
     </script>
