@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <title>Remote Control</title>
+</head>
+<body>
+    <div id="button">
+        <div id="up">
+            <button onmousedown="sendCommand('F')" onmouseup="sendCommand('S')" id="upBtn" disabled><ion-icon name="arrow-up-outline"></ion-icon></button>
+        </div>
+        <div id="down">
+            <button onmousedown="sendCommand('B')" onmouseup="sendCommand('S')" id="downBtn" disabled><ion-icon name="arrow-down-outline"></ion-icon></button>
+        </div>
+        <div id="left">
+            <button onmousedown="sendCommand('L')" onmouseup="sendCommand('S')" id="leftBtn" disabled><ion-icon name="arrow-back-outline"></ion-icon></button>
+        </div>
+        <div id="right">
+            <button onmousedown="sendCommand('R')" onmouseup="sendCommand('S')" id="rightBtn" disabled><ion-icon name="arrow-forward-outline"></ion-icon></button>
+        </div>
+        <div id="stop">
+            <button onmousedown="sendCommand('S')" id="stopBtn" disabled><ion-icon name="stop-circle-outline"></ion-icon></button>
+        </div>
+
+        <div id="mode">
+            <button onclick="toggleMode()" id="modeBtn"><ion-icon name="play-circle-outline"></ion-icon></button>
+        </div>
+
+        <div id="speed">
+            <button onclick="sendSpeed('1')" id="speed1Btn" disabled>1</button>
+            <button onclick="sendSpeed('2')" id="speed2Btn" disabled>2</button>
+            <button onclick="sendSpeed('3')" id="speed3Btn" disabled>3</button>
+        </div>
+    </div>
+    <style>
+        #button {
+            display: grid;
+            grid-template-columns: 100px 100px 100px;
+            grid-template-rows: 100px 100px 100px;
+            gap: 10px;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+        }
+
+        #up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        #down {
+            grid-column: 2;
+            grid-row: 3;
+        }
+
+        #left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        #right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        #stop {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        #mode {
+            margin-left: 400px;
+            margin-top: 110px;
+        }
+
+        button {
+            width: 100px;
+            height: 100px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid #333;
+            background-color: white;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        button:active {
+            box-shadow: 0 0 15px 5px rgba(0, 150, 255, 0.5);
+            border-color: rgba(0, 150, 255, 0.8);
+        }
+
+        #speed {
+            margin-left: 250px;
+            grid-column: 4 / span 2;
+            margin-top: 110px;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        #speed button {
+            width: 100px;
+            height: 100px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid #333;
+            background-color: white;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+    </style>
+
+    <!-- Link to the external Firebase script -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js" type="module"></script>
+    <script type="module">
+        // Firebase configuration and initialization
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8u5p6YbJGvFLHVhtruqaYQDjzWA7QAd0",
+            authDomain: "robot-car-iot-146ba.firebaseapp.com",
+            databaseURL: "https://robot-car-iot-146ba-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "robot-car-iot-146ba",
+            storageBucket: "robot-car-iot-146ba.appspot.com",
+            messagingSenderId: "521430468905",
+            appId: "1:521430468905:web:557066eea0f10665a68f38",
+            measurementId: "G-49GDMDCX12"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
+
+        let isAutoMode = false;
+
+        // Function to send commands to Firebase
+        window.sendCommand = function(command) {
+            if (!isAutoMode) {
+                const commandRef = ref(database, 'commands');
+                set(commandRef, command)
+                    .then(() => {
+                        console.log('Command sent:', command);
+                    })
+                    .catch((error) => {
+                        console.error('Error sending command:', error);
+                    });
+            }
+        }
+
+        // Function to send speed to Firebase
+        window.sendSpeed = function(speed) {
+            if (!isAutoMode) {
+                const speedRef = ref(database, 'speed');
+                set(speedRef, speed)
+                    .then(() => {
+                        console.log('Speed sent:', speed);
+                    })
+                    .catch((error) => {
+                        console.error('Error sending speed:', error);
+                    });
+            }
+        }
+
+        // Function to toggle auto/manual mode
+        window.toggleMode = function() {
+            isAutoMode = !isAutoMode;
+            const modeRef = ref(database, 'mode');
+            const mode = isAutoMode ? 'A' : 'M';  // 'A' for auto, 'M' for manual
+            set(modeRef, mode)
+                .then(() => {
+                    console.log('Mode sent:', mode);
+                    toggleControlButtons(!isAutoMode);  // Enable or disable manual control buttons
+                })
+                .catch((error) => {
+                    console.error('Error sending mode:', error);
+                });
+        }
+
+        // Function to enable or disable manual control buttons based on mode
+        function toggleControlButtons(enable) {
+            document.getElementById('upBtn').disabled = !enable;
+            document.getElementById('downBtn').disabled = !enable;
+            document.getElementById('leftBtn').disabled = !enable;
+            document.getElementById('rightBtn').disabled = !enable;
+            document.getElementById('stopBtn').disabled = !enable;
+            document.getElementById('speed1Btn').disabled = !enable;
+            document.getElementById('speed2Btn').disabled = !enable;
+            document.getElementById('speed3Btn').disabled = !enable;
+        }
+
+    </script>
+</body>
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</html>
